@@ -251,7 +251,7 @@
       return { bw, bh, beltY, sx: (W - sw) / 2, sw, sy: beltY - bh / 2 - 28, sh: bh + 56 };
     };
     function makeBag(x) {
-      const p = Math.min(0.55, 0.3 + t / DUR * 0.25);
+      const p = Math.min(0.65, 0.35 + t / DUR * 0.3);
       const star = t > 6 && Math.random() < 0.12;
       const nThreat = star ? 2 + (Math.random() < .5 ? 1 : 0) : (Math.random() < p ? 1 : 0);
       const n = Math.min(6, Math.max(3 + (Math.random() * 3 | 0), nThreat + 2));
@@ -286,7 +286,7 @@
         const g = geo();
         if (px < g.sx || px > g.sx + g.sw || py < g.sy || py > g.sy + g.sh) return;
         if (stun > 0) { sfx('bad'); return; }
-        let best = null, bb = null, bd = 32;
+        let best = null, bb = null, bd = 26;
         bags.forEach(b => b.items.forEach(it => {
           if (it.gone) return; const [x, y] = itemPos(b, it, g);
           if (x < g.sx || x > g.sx + g.sw) return;
@@ -301,7 +301,7 @@
           if (G.combo % 5 === 0) { toast(`${G.combo} 연속 압수!`, C.amber); flash(C.amber, .15); }
           if (bb.items.every(i => !i.bad || i.gone) && bb.star) { pop(W / 2, g.sy - 10, '★ 보너스 가방 클리어!', C.amber); }
         } else {
-          st.wrong++; G.combo = 0; G.score = Math.max(0, G.score - 30); stun = 0.6;
+          st.wrong++; G.combo = 0; G.score = Math.max(0, G.score - 30); stun = 0.9;
           pop(x, y - 22, `${best.l}? -30`, C.amber); shake(6); sfx('bad');
         }
       },
@@ -309,7 +309,7 @@
         t += dt; stun -= dt;
         $('#clock').textContent = fmt(7 * 60 + 35 + Math.min(1, t / DUR) * 25);
         const g = geo();
-        const v = 75 + Math.min(1, t / DUR) * 115;
+        const v = 95 + Math.min(1, t / DUR) * 150;
         if (!rushShown && t > DUR * 0.65) { rushShown = true; toast('러시 아워! 벨트가 빨라집니다', C.amber); sfx('alarm'); }
         bags.forEach(b => b.x += v * dt);
         const leftmost = bags.length ? Math.min(...bags.map(b => b.x)) : 1e9;
@@ -397,17 +397,17 @@
     controls([]);
     const planes = [];
     const callsigns = ['DL1489','US6315','CO1702','NW253','UA2305','AA1922','DL2171','US2950','AF009','BA175','TW883','CO44'];
-    callsigns.slice(0, 7).forEach((cs, k) => {
+    callsigns.slice(0, 10).forEach((cs, k) => {
       const a = rand(0, Math.PI * 2), sp = rand(0.012, 0.022);
       planes.push({ cs, x: rand(.1, .9), y: rand(.1, .9), h: a, sp, alt: 'FL' + (240 + Math.floor(rand(0, 12)) * 10),
         turnAt: rand(4, DUR - 6), turnBy: rand(-1, 1), turned: false, target: false });
     });
     const boarded = shuffle(FLIGHTS.filter(f => G.flights[f.id].status === 'boarded'));
-    const slots = shuffle([2, 8, 14, 20]).slice(0, boarded.length).sort((a, b) => a - b);
+    const slots = shuffle([2, 6, 10, 14]).slice(0, boarded.length).sort((a, b) => a - b);
     boarded.forEach((f, k) => {
       const o = PORTS[f.org];
       planes.push({ cs: f.id, x: o[0] - 0.05, y: o[1] + 0.02, h: Math.PI + rand(-.25, .25), sp: 0.014, alt: 'FL310',
-        target: true, anomAt: slots[k] + rand(0, 3), anom: false, state: 'normal', left: 14, max: 14, dest: f.org === 'IAD' ? [0.52, 0.7] : [0.7, 0.42] });
+        target: true, anomAt: slots[k] + rand(0, 3), anom: false, state: 'normal', left: 9, max: 9, dest: f.org === 'IAD' ? [0.52, 0.7] : [0.7, 0.42] });
     });
     let cooldown = 0;
     function onClick(px, py) {
@@ -421,9 +421,9 @@
         toast(`${best.cs} · 조종실 잠금, 회항 지시 전달`, C.ok);
         pop(best.x * W, best.y * H - 40, `+${pts}`, C.ok); burst(best.x * W, best.y * H, C.ok, 30); flash(C.ok, .2); sfx('good');
       } else if (best.target) {
-        toast(`${best.cs} · 아직 정상 교신 중입니다`, C.amber); cooldown = 0.3; G.score -= 10; shake(5); sfx('bad'); pop(px, py - 20, '-10', C.amber);
+        toast(`${best.cs} · 아직 정상 교신 중입니다`, C.amber); cooldown = 0.9; G.score -= 10; shake(5); sfx('bad'); pop(px, py - 20, '-10', C.amber);
       } else {
-        toast(`${best.cs} · 정상 항공편입니다`, C.amber); cooldown = 0.4; G.score -= 20; shake(5); sfx('bad'); pop(px, py - 20, '-20', C.amber);
+        toast(`${best.cs} · 정상 항공편입니다`, C.amber); cooldown = 1.0; G.score -= 20; shake(5); sfx('bad'); pop(px, py - 20, '-20', C.amber);
       }
     }
     function done() {
@@ -540,14 +540,14 @@
   function cabinScene(id, next) {
     const fi = Math.max(0, FLIGHTS.findIndex(f => f.id === id));
     header('3단계 · 기내', `${id} 조종실을 지키세요`, '끌어서 이동 · 두 번 탭/Space 돌진 · E 승객 돌격');
-    const TOTAL = 6 + fi;
+    const TOTAL = 8 + fi * 2;
     let t = 0, over = false, spawned = 0, nextSpawn = 1.0, door = 100, courage = 0, lastTap = -9, bangT = 0, lastLabel = '';
     const P = { x: W / 2, y: H * 0.35, tx: null, ty: null, held: false, dash: 0, cd: 0, dx: 0, dy: -1, r: 12 };
     const hij = [];
     const geo = () => { const cw = Math.min(W * 0.92, 340); return { cw, x0: (W - cw) / 2, door: 58, top: 76, bot: H - 34 }; };
     function dash() {
       if (P.cd > 0 || over) return;
-      P.dash = 0.26; P.cd = 1.3; sfx('hit'); shake(3);
+      P.dash = 0.26; P.cd = 1.7; sfx('hit'); shake(3);
     }
     function rally() {
       if (courage < 1 || over) return;
@@ -562,14 +562,14 @@
       const x = side < 0 ? rand(g.x0 + 18, W / 2 - 34) : rand(W / 2 + 34, g.x0 + g.cw - 18);
       const roll = Math.random();
       const type = spawned >= 2 && roll < 0.28 ? 'fast' : spawned >= 3 && roll > 0.8 ? 'big' : 'norm';
-      hij.push({ x, y, type, sp: type === 'fast' ? 100 : type === 'big' ? 46 : 64, need: type === 'big' ? 1.0 : 0.45,
+      hij.push({ x, y, type, sp: type === 'fast' ? 118 : type === 'big' ? 52 : 74, need: type === 'big' ? 1.3 : 0.55,
         prog: 0, stun: 0.5, down: false, r: type === 'big' ? 14 : 10, atDoor: false });
       spawned++; burst(x, y, C.alert, 10); sfx('tick');
     }
     function subdue(h, byDash) {
       h.down = true;
       const pts = 80 + (byDash ? 50 : 0) + (h.type === 'big' ? 60 : h.type === 'fast' ? 30 : 0);
-      G.score += pts; courage = Math.min(1, courage + 0.34);
+      G.score += pts; courage = Math.min(1, courage + 0.25);
       pop(h.x, h.y - 26, `${byDash ? '돌진 ' : ''}제압! +${pts}`, C.ok); burst(h.x, h.y, C.ok, 28); sfx('good');
       if (byDash) { shake(6); flash(C.ok, .12); }
     }
@@ -606,7 +606,7 @@
         nextSpawn -= dt;
         if (spawned < TOTAL && nextSpawn <= 0) {
           spawn(); if (spawned >= 4 && spawned < TOTAL && Math.random() < 0.35) spawn();
-          nextSpawn = rand(1.5, 2.8) - fi * 0.12;
+          nextSpawn = rand(1.1, 2.1) - fi * 0.12;
         }
         // player movement
         let mx = 0, my = 0;
@@ -640,7 +640,7 @@
           else if (h.y > g.door + 14) h.y -= h.sp * dt;
           if (h.y <= g.door + 16 && Math.abs(h.x - ax) < 6) {
             h.y = g.door + 14; banging = true;
-            door -= dt * (h.type === 'big' ? 14 : 9);
+            door -= dt * (h.type === 'big' ? 20 : 13);
           }
         });
         // keep hijackers from stacking perfectly
@@ -696,7 +696,7 @@
         ctx.fillStyle = C.sky; ctx.beginPath(); ctx.arc(P.x, P.y, P.r, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1;
         ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(P.x + P.dx * 5, P.y + P.dy * 5, 3, 0, Math.PI * 2); ctx.fill();
-        if (P.cd > 0) { ctx.strokeStyle = C.muted; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - P.cd / 1.3)); ctx.stroke(); }
+        if (P.cd > 0) { ctx.strokeStyle = C.muted; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - P.cd / 1.7)); ctx.stroke(); }
         // danger vignette
         const danger = door < 100 && hij.some(h => !h.down && h.y <= g.door + 20) ? 1 : 0;
         if (danger && !over) {
@@ -726,7 +726,7 @@
       return `<li><b>${f.id}</b><span class="tag ${cls}">${tx}</span></li>`;
     }).join('');
     const ground = FLIGHTS.filter(f => G.flights[f.id].status === 'clear').length;
-    const rank = safe === 4 ? (ground === 4 && G.score >= 600 ? 'S' : 'A') : safe === 3 ? 'B' : safe >= 1 ? 'C' : 'D';
+    const rank = safe === 4 ? (ground === 4 && G.score >= 1000 ? 'S' : 'A') : safe === 3 ? 'B' : safe >= 1 ? 'C' : 'D';
     let best = 0, newBest = false;
     try { best = +localStorage.getItem('clearSkiesBest') || 0; if (G.score > best) { localStorage.setItem('clearSkiesBest', G.score); newBest = best > 0; best = G.score; } } catch (e) { best = G.score; }
     sfx(safe === 4 ? 'win' : safe ? 'good' : 'lose');
